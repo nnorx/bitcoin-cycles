@@ -18,6 +18,15 @@ export default defineConfig({
 			"@": fileURLToPath(new URL("./src", import.meta.url)),
 		},
 	},
+	server: {
+		proxy: {
+			"/api/coingecko": {
+				target: "https://api.coingecko.com",
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/api\/coingecko/, ""),
+			},
+		},
+	},
 	build: {
 		minify: "esbuild",
 		cssMinify: true,

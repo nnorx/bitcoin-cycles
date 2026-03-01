@@ -7,6 +7,14 @@ afterEach(() => {
 	cleanup();
 });
 
+// Mock ResizeObserver for chart sizing tests
+class MockResizeObserver {
+	observe() {}
+	unobserve() {}
+	disconnect() {}
+}
+globalThis.ResizeObserver = MockResizeObserver;
+
 // Mock matchMedia for tests (needed for theme detection)
 Object.defineProperty(window, "matchMedia", {
 	writable: true,
