@@ -44,8 +44,7 @@ export function ChartControls({
 	onViewModeChange,
 	onScaleModeChange,
 }: ChartControlsProps) {
-	const isCycleView =
-		viewMode === "peak-trough" || viewMode === "trough-peak";
+	const isCycleView = viewMode === "peak-trough" || viewMode === "trough-peak";
 	const topLevel: TopLevel = isCycleView ? "cycle" : viewMode;
 
 	const handleTopLevelChange = (value: TopLevel) => {

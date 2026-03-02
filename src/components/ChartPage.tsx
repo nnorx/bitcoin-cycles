@@ -67,8 +67,7 @@ export function ChartPage() {
 		[allSeries, visibilityMap],
 	);
 
-	const isCycleView =
-		viewMode === "peak-trough" || viewMode === "trough-peak";
+	const isCycleView = viewMode === "peak-trough" || viewMode === "trough-peak";
 
 	const averageSeries = useMemo(() => {
 		if (viewMode === "epoch") return [];
@@ -115,7 +114,15 @@ export function ChartPage() {
 		}
 
 		return avgs;
-	}, [viewMode, allSeries, series, enabledAverages, showCustomAverage, isDark, isCycleView]);
+	}, [
+		viewMode,
+		allSeries,
+		series,
+		enabledAverages,
+		showCustomAverage,
+		isDark,
+		isCycleView,
+	]);
 
 	const combinedSeries = useMemo(
 		() => [...series, ...averageSeries],

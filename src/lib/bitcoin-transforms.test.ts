@@ -232,27 +232,27 @@ describe("buildPeakTroughSeries", () => {
 		const series = buildPeakTroughSeries(PEAK_BOTTOM_DATA, false);
 		expect(series.length).toBeGreaterThanOrEqual(1);
 
-		const first = series[0]!;
-		expect(first.id).toBe("peak-trough-1");
-		expect(first.label).toContain("Peak 1");
-		expect(first.label).toContain("2013");
-		expect(first.visible).toBe(true);
+		const first = series[0];
+		expect(first?.id).toBe("peak-trough-1");
+		expect(first?.label).toContain("Peak 1");
+		expect(first?.label).toContain("2013");
+		expect(first?.visible).toBe(true);
 	});
 
 	it("starts at day 0 with 0% return", () => {
 		const series = buildPeakTroughSeries(PEAK_BOTTOM_DATA, false);
-		const first = series[0]!;
-		expect(first.data[0]!.day).toBe(0);
-		expect(first.data[0]!.percentReturn).toBe(0);
+		const first = series[0];
+		expect(first?.data[0]?.day).toBe(0);
+		expect(first?.data[0]?.percentReturn).toBe(0);
 	});
 
 	it("picks the highest price day in the peak month as baseline", () => {
 		const series = buildPeakTroughSeries(PEAK_BOTTOM_DATA, false);
-		const first = series[0]!;
+		const first = series[0];
 
 		// Baseline = 1100 (Nov 29, highest in Nov 2013)
 		// Price 600 on 2014-06-15: (600 - 1100) / 1100 * 100 ≈ -45.45%
-		const midPoint = first.data.find(
+		const midPoint = first?.data.find(
 			(d) => d.percentReturn < -40 && d.percentReturn > -50,
 		);
 		expect(midPoint).toBeDefined();
@@ -260,9 +260,9 @@ describe("buildPeakTroughSeries", () => {
 
 	it("shows negative returns during decline", () => {
 		const series = buildPeakTroughSeries(PEAK_BOTTOM_DATA, false);
-		const first = series[0]!;
-		const lastPoint = first.data[first.data.length - 1]!;
-		expect(lastPoint.percentReturn).toBeLessThan(0);
+		const first = series[0];
+		const lastPoint = first?.data.at(-1);
+		expect(lastPoint?.percentReturn).toBeLessThan(0);
 	});
 });
 
@@ -284,34 +284,34 @@ describe("buildTroughPeakSeries", () => {
 		const series = buildTroughPeakSeries(BOTTOM_PEAK_DATA, false);
 		expect(series.length).toBeGreaterThanOrEqual(1);
 
-		const first = series[0]!;
-		expect(first.id).toBe("trough-peak-1");
-		expect(first.label).toContain("Recovery 1");
-		expect(first.label).toContain("2015");
-		expect(first.visible).toBe(true);
+		const first = series[0];
+		expect(first?.id).toBe("trough-peak-1");
+		expect(first?.label).toContain("Recovery 1");
+		expect(first?.label).toContain("2015");
+		expect(first?.visible).toBe(true);
 	});
 
 	it("starts at day 0 with 0% return", () => {
 		const series = buildTroughPeakSeries(BOTTOM_PEAK_DATA, false);
-		const first = series[0]!;
-		expect(first.data[0]!.day).toBe(0);
-		expect(first.data[0]!.percentReturn).toBe(0);
+		const first = series[0];
+		expect(first?.data[0]?.day).toBe(0);
+		expect(first?.data[0]?.percentReturn).toBe(0);
 	});
 
 	it("picks the lowest price day in the bottom month as baseline", () => {
 		const series = buildTroughPeakSeries(BOTTOM_PEAK_DATA, false);
-		const first = series[0]!;
+		const first = series[0];
 
 		// Baseline = 180 (Jan 14, lowest in Jan 2015)
 		// Price 19000 on Dec 17, 2017: (19000 - 180) / 180 * 100 ≈ 10455.6%
-		const peakPoint = first.data.find((d) => d.percentReturn > 10000);
+		const peakPoint = first?.data.find((d) => d.percentReturn > 10000);
 		expect(peakPoint).toBeDefined();
 	});
 
 	it("shows positive returns during recovery", () => {
 		const series = buildTroughPeakSeries(BOTTOM_PEAK_DATA, false);
-		const first = series[0]!;
-		const lastPoint = first.data[first.data.length - 1]!;
-		expect(lastPoint.percentReturn).toBeGreaterThan(0);
+		const first = series[0];
+		const lastPoint = first?.data.at(-1);
+		expect(lastPoint?.percentReturn).toBeGreaterThan(0);
 	});
 });

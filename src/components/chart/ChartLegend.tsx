@@ -30,8 +30,7 @@ export function ChartLegend({
 	const allVisible = yearSeries.every((s) => s.visible);
 	const noneVisible = yearSeries.every((s) => !s.visible);
 	const isYearView = viewMode === "year";
-	const isCycleView =
-		viewMode === "peak-trough" || viewMode === "trough-peak";
+	const isCycleView = viewMode === "peak-trough" || viewMode === "trough-peak";
 
 	return (
 		<div className="flex flex-col gap-2">
