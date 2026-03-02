@@ -8,6 +8,8 @@ import {
 import {
 	buildAverageSeries,
 	buildEpochSeries,
+	buildPeakTroughSeries,
+	buildTroughPeakSeries,
 	buildYearSeries,
 } from "@/lib/bitcoin-transforms";
 import type { ScaleMode, ViewMode } from "@/lib/bitcoin-types";
@@ -44,9 +46,16 @@ export function ChartPage() {
 
 	const allSeries = useMemo(() => {
 		if (!data) return [];
-		return viewMode === "year"
-			? buildYearSeries(data, isDark)
-			: buildEpochSeries(data, isDark);
+		switch (viewMode) {
+			case "year":
+				return buildYearSeries(data, isDark);
+			case "epoch":
+				return buildEpochSeries(data, isDark);
+			case "peak-trough":
+				return buildPeakTroughSeries(data, isDark);
+			case "trough-peak":
+				return buildTroughPeakSeries(data, isDark);
+		}
 	}, [data, viewMode, isDark]);
 
 	const series = useMemo(
@@ -58,39 +67,47 @@ export function ChartPage() {
 		[allSeries, visibilityMap],
 	);
 
+	const isCycleView =
+		viewMode === "peak-trough" || viewMode === "trough-peak";
+
 	const averageSeries = useMemo(() => {
-		if (viewMode !== "year") return [];
+		if (viewMode === "epoch") return [];
 
 		const avgColorMap = isDark ? AVG_COLORS_DARK : AVG_COLORS_LIGHT;
 		const avgs = [];
 
-		for (const group of YEAR_GROUPS) {
-			const avgId = `avg-${group.id}`;
-			if (!enabledAverages.has(avgId)) continue;
+		if (viewMode === "year") {
+			for (const group of YEAR_GROUPS) {
+				const avgId = `avg-${group.id}`;
+				if (!enabledAverages.has(avgId)) continue;
 
-			const groupYearSeries = allSeries.filter((s) =>
-				group.years.includes(s.id),
-			);
-			if (groupYearSeries.length === 0) continue;
+				const groupYearSeries = allSeries.filter((s) =>
+					group.years.includes(s.id),
+				);
+				if (groupYearSeries.length === 0) continue;
 
-			avgs.push(
-				buildAverageSeries(
-					groupYearSeries,
-					avgId,
-					`Avg: ${group.label}`,
-					avgColorMap[group.id] ?? "oklch(0.5 0 0)",
-				),
-			);
+				avgs.push(
+					buildAverageSeries(
+						groupYearSeries,
+						avgId,
+						`Avg: ${group.label}`,
+						avgColorMap[group.id] ?? "oklch(0.5 0 0)",
+					),
+				);
+			}
 		}
 
 		if (showCustomAverage) {
-			const visibleYears = series.filter((s) => s.visible && !s.dashed);
-			if (visibleYears.length > 0) {
+			const visible = series.filter((s) => s.visible && !s.dashed);
+			if (visible.length > 0) {
+				const countLabel = isCycleView
+					? `${visible.length} cycles`
+					: `${visible.length}yr`;
 				avgs.push(
 					buildAverageSeries(
-						visibleYears,
+						visible,
 						"avg-custom",
-						`Avg: Custom (${visibleYears.length}yr)`,
+						`Avg: Custom (${countLabel})`,
 						avgColorMap.custom ?? "oklch(0.5 0 0)",
 					),
 				);
@@ -98,7 +115,7 @@ export function ChartPage() {
 		}
 
 		return avgs;
-	}, [viewMode, allSeries, series, enabledAverages, showCustomAverage, isDark]);
+	}, [viewMode, allSeries, series, enabledAverages, showCustomAverage, isDark, isCycleView]);
 
 	const combinedSeries = useMemo(
 		() => [...series, ...averageSeries],

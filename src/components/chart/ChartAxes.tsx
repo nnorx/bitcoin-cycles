@@ -47,7 +47,21 @@ export function ChartAxes({
 				label: MONTH_LABELS[i] ?? "",
 			}));
 		}
-		return EPOCH_YEAR_TICKS.map((day) => ({
+		if (viewMode === "epoch") {
+			return EPOCH_YEAR_TICKS.map((day) => ({
+				value: day,
+				label: `Y${day / 365}`,
+			}));
+		}
+		if (viewMode === "peak-trough") {
+			const ticks: Array<{ value: number; label: string }> = [];
+			for (let m = 0; m <= 14; m++) {
+				ticks.push({ value: m * 30, label: `${m}m` });
+			}
+			return ticks;
+		}
+		// trough-peak
+		return [0, 365, 730, 1095].map((day) => ({
 			value: day,
 			label: `Y${day / 365}`,
 		}));

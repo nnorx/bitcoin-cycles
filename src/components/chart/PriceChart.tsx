@@ -28,11 +28,19 @@ export function PriceChart({ series, viewMode, scaleMode }: PriceChartProps) {
 	);
 
 	const xScale = useMemo(() => {
-		const maxDay = viewMode === "year" ? 366 : 1461;
+		let maxDay: number;
+		if (viewMode === "year") {
+			maxDay = 366;
+		} else if (viewMode === "epoch") {
+			maxDay = 1461;
+		} else {
+			const allDays = visibleSeries.flatMap((s) => s.data.map((d) => d.day));
+			maxDay = allDays.length > 0 ? Math.max(...allDays) * 1.02 : 1000;
+		}
 		return scaleLinear()
 			.domain([viewMode === "year" ? 1 : 0, maxDay])
 			.range([0, innerWidth]);
-	}, [viewMode, innerWidth]);
+	}, [viewMode, innerWidth, visibleSeries]);
 
 	const yScale = useMemo(() => {
 		if (visibleSeries.length === 0) {

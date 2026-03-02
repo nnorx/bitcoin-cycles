@@ -99,6 +99,27 @@ export const AVG_COLORS_DARK: Record<string, string> = {
 	custom: "oklch(0.90 0.16 0)",
 };
 
+/**
+ * Peak months: the month containing each cycle's all-time high.
+ * The exact peak day is resolved from data (highest price in the month).
+ */
+export const CYCLE_PEAK_MONTHS = [
+	{ year: 2013, month: 11 },
+	{ year: 2017, month: 12 },
+	{ year: 2021, month: 11 },
+	{ year: 2025, month: 10 },
+] as const;
+
+/**
+ * Bottom months: the month containing each cycle's post-peak low.
+ * The exact bottom day is resolved from data (lowest price in the month).
+ */
+export const CYCLE_BOTTOM_MONTHS = [
+	{ year: 2015, month: 1 },
+	{ year: 2018, month: 12 },
+	{ year: 2022, month: 11 },
+] as const;
+
 export const CHART_MARGIN = {
 	top: 20,
 	right: 20,

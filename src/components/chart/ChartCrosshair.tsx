@@ -59,10 +59,10 @@ export function ChartCrosshair({
 	if (mouseX == null || !tooltipData || tooltipData.items.length === 0)
 		return null;
 
-	const tooltipWidth = viewMode === "epoch" ? 190 : 140;
-	const flipThreshold = width - tooltipWidth - 20;
+	const tooltipMaxWidth = viewMode === "year" ? 140 : 220;
+	const flipThreshold = width - tooltipMaxWidth - 20;
 	const tooltipX =
-		mouseX > flipThreshold ? mouseX - tooltipWidth - 12 : mouseX + 12;
+		mouseX > flipThreshold ? mouseX - tooltipMaxWidth - 12 : mouseX + 12;
 
 	return (
 		<g>
@@ -82,13 +82,15 @@ export function ChartCrosshair({
 			<foreignObject
 				x={tooltipX}
 				y={8}
-				width={tooltipWidth}
+				width={tooltipMaxWidth}
 				height={height - 16}
 				pointerEvents="none"
 				style={{ overflow: "visible" }}
 			>
 				<div
 					style={{
+						maxWidth: tooltipMaxWidth,
+						width: "max-content",
 						background: "var(--popover)",
 						color: "var(--popover-foreground)",
 						border: "1px solid var(--border)",
@@ -115,10 +117,22 @@ export function ChartCrosshair({
 									flexShrink: 0,
 								}}
 							/>
-							<span style={{ flex: 1, whiteSpace: "nowrap" }}>
+							<span
+								style={{
+									flex: 1,
+									overflow: "hidden",
+									textOverflow: "ellipsis",
+									whiteSpace: "nowrap",
+								}}
+							>
 								{item.label}
 							</span>
-							<span style={{ fontVariantNumeric: "tabular-nums" }}>
+							<span
+								style={{
+									flexShrink: 0,
+									fontVariantNumeric: "tabular-nums",
+								}}
+							>
 								{item.value}
 							</span>
 						</div>

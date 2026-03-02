@@ -1,16 +1,31 @@
 # Bitcoin Cycles
 
-A Bitcoin cycle visualizer that charts yearly performance and halving-aligned epochs using D3.js. Compare any combination of years, filter by 4-year cycle groups, and overlay computed averages.
+A Bitcoin cycle visualizer that charts yearly performance, halving-aligned epochs, and peak/bottom cycles using D3.js. Compare any combination of years or cycles, filter by 4-year cycle groups, and overlay computed averages.
 
-![Bitcoin Cycles screenshot](https://nnorx.github.io/bitcoin-cycles/screenshot.png)
+![Bitcoin Cycles — Year View](https://nnorx.github.io/bitcoin-cycles/screenshot-year.png)
+
+<details>
+<summary>Epoch View</summary>
+
+![Bitcoin Cycles — Epoch View](https://nnorx.github.io/bitcoin-cycles/screenshot-epoch.png)
+
+</details>
+
+<details>
+<summary>Cycle View</summary>
+
+![Bitcoin Cycles — Cycle View](https://nnorx.github.io/bitcoin-cycles/screenshot-cycle.png)
+
+</details>
 
 ## Features
 
 - **Year View** — Each year's BTC performance as % return from Jan 1, overlaid on a single chart
 - **Epoch View** — Performance aligned to Bitcoin halving dates (2012, 2016, 2020, 2024)
+- **Cycle View** — Visualize peak-to-bottom (bear) and bottom-to-peak (recovery) phases across Bitcoin cycles
 - **Log / Linear Scale** — Toggle between scale modes
 - **Year Group Filters** — Quick-select Election, Post-Election, Midterm, or Pre-Election years
-- **Average Lines** — Toggle dashed average lines for any group, or average the currently visible years
+- **Average Lines** — Toggle dashed average lines for any group, or average the currently visible series
 - **Crosshair Tooltip** — Hover to see % return for all visible series at any day
 - **Dark / Light Theme** — Adapts chart colors automatically
 

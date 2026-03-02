@@ -1,4 +1,6 @@
 import {
+	CYCLE_BOTTOM_MONTHS,
+	CYCLE_PEAK_MONTHS,
 	HALVING_DATES,
 	SERIES_COLORS_DARK,
 	SERIES_COLORS_LIGHT,
@@ -112,6 +114,108 @@ export function buildEpochSeries(
 	}
 
 	return epochs;
+}
+
+function findExtremeInMonth(
+	data: DailyPrice[],
+	year: number,
+	month: number,
+	mode: "max" | "min",
+): DailyPrice | undefined {
+	const candidates = data.filter(
+		(d) =>
+			d.date.getUTCFullYear() === year && d.date.getUTCMonth() + 1 === month,
+	);
+	if (candidates.length === 0) return undefined;
+	return candidates.reduce((best, d) =>
+		mode === "max"
+			? d.price > best.price
+				? d
+				: best
+			: d.price < best.price
+				? d
+				: best,
+	);
+}
+
+export function buildPeakTroughSeries(
+	data: DailyPrice[],
+	isDark: boolean,
+): ChartSeries[] {
+	const peaks = CYCLE_PEAK_MONTHS.map((pm) =>
+		findExtremeInMonth(data, pm.year, pm.month, "max"),
+	).filter((d): d is DailyPrice => d !== undefined);
+
+	const bottoms = CYCLE_BOTTOM_MONTHS.map((bm) =>
+		findExtremeInMonth(data, bm.year, bm.month, "min"),
+	).filter((d): d is DailyPrice => d !== undefined);
+
+	return peaks.flatMap((peak, i) => {
+		const bottom = bottoms[i];
+		const endDate = bottom ? bottom.date : new Date();
+		const epochData = data.filter(
+			(d) => d.date >= peak.date && d.date <= endDate,
+		);
+		if (epochData.length === 0) return [];
+
+		const baseline = peak.price;
+		const startYear = peak.date.getUTCFullYear();
+		const endYear = endDate.getUTCFullYear();
+		const suffix = bottom ? "" : " (ongoing)";
+
+		return [
+			{
+				id: `peak-trough-${i + 1}`,
+				label: `Peak ${i + 1} (${startYear}–${endYear})${suffix}`,
+				color: getColor(i, isDark),
+				data: epochData.map((d) => ({
+					day: daysBetween(peak.date, d.date),
+					percentReturn: ((d.price - baseline) / baseline) * 100,
+				})),
+				visible: true,
+			},
+		];
+	});
+}
+
+export function buildTroughPeakSeries(
+	data: DailyPrice[],
+	isDark: boolean,
+): ChartSeries[] {
+	const peaks = CYCLE_PEAK_MONTHS.map((pm) =>
+		findExtremeInMonth(data, pm.year, pm.month, "max"),
+	).filter((d): d is DailyPrice => d !== undefined);
+
+	const bottoms = CYCLE_BOTTOM_MONTHS.map((bm) =>
+		findExtremeInMonth(data, bm.year, bm.month, "min"),
+	).filter((d): d is DailyPrice => d !== undefined);
+
+	return bottoms.flatMap((bottom, i) => {
+		const nextPeak = peaks[i + 1];
+		const endDate = nextPeak ? nextPeak.date : new Date();
+		const epochData = data.filter(
+			(d) => d.date >= bottom.date && d.date <= endDate,
+		);
+		if (epochData.length === 0) return [];
+
+		const baseline = bottom.price;
+		const startYear = bottom.date.getUTCFullYear();
+		const endYear = endDate.getUTCFullYear();
+		const suffix = nextPeak ? "" : " (ongoing)";
+
+		return [
+			{
+				id: `trough-peak-${i + 1}`,
+				label: `Recovery ${i + 1} (${startYear}–${endYear})${suffix}`,
+				color: getColor(i, isDark),
+				data: epochData.map((d) => ({
+					day: daysBetween(bottom.date, d.date),
+					percentReturn: ((d.price - baseline) / baseline) * 100,
+				})),
+				visible: true,
+			},
+		];
+	});
 }
 
 /**

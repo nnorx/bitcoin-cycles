@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
 	buildAverageSeries,
 	buildEpochSeries,
+	buildPeakTroughSeries,
+	buildTroughPeakSeries,
 	buildYearSeries,
 } from "./bitcoin-transforms";
 import type { ChartSeries, DailyPrice } from "./bitcoin-types";
@@ -209,5 +211,107 @@ describe("buildAverageSeries", () => {
 		const avg = buildAverageSeries([s], "avg-test", "Avg", "#fff");
 		const days = avg.data.map((d) => d.day);
 		expect(days).toEqual([1, 50, 100]);
+	});
+});
+
+describe("buildPeakTroughSeries", () => {
+	const PEAK_BOTTOM_DATA: DailyPrice[] = [
+		// Nov 2013 — peak month. Highest price = 1100 on Nov 29
+		makePrice("2013-11-01", 200),
+		makePrice("2013-11-15", 800),
+		makePrice("2013-11-29", 1100),
+		// Mid-cycle decline
+		makePrice("2014-06-15", 600),
+		// Jan 2015 — bottom month. Lowest price = 180 on Jan 14
+		makePrice("2015-01-01", 300),
+		makePrice("2015-01-14", 180),
+		makePrice("2015-01-31", 220),
+	];
+
+	it("creates a series from peak to bottom", () => {
+		const series = buildPeakTroughSeries(PEAK_BOTTOM_DATA, false);
+		expect(series.length).toBeGreaterThanOrEqual(1);
+
+		const first = series[0]!;
+		expect(first.id).toBe("peak-trough-1");
+		expect(first.label).toContain("Peak 1");
+		expect(first.label).toContain("2013");
+		expect(first.visible).toBe(true);
+	});
+
+	it("starts at day 0 with 0% return", () => {
+		const series = buildPeakTroughSeries(PEAK_BOTTOM_DATA, false);
+		const first = series[0]!;
+		expect(first.data[0]!.day).toBe(0);
+		expect(first.data[0]!.percentReturn).toBe(0);
+	});
+
+	it("picks the highest price day in the peak month as baseline", () => {
+		const series = buildPeakTroughSeries(PEAK_BOTTOM_DATA, false);
+		const first = series[0]!;
+
+		// Baseline = 1100 (Nov 29, highest in Nov 2013)
+		// Price 600 on 2014-06-15: (600 - 1100) / 1100 * 100 ≈ -45.45%
+		const midPoint = first.data.find(
+			(d) => d.percentReturn < -40 && d.percentReturn > -50,
+		);
+		expect(midPoint).toBeDefined();
+	});
+
+	it("shows negative returns during decline", () => {
+		const series = buildPeakTroughSeries(PEAK_BOTTOM_DATA, false);
+		const first = series[0]!;
+		const lastPoint = first.data[first.data.length - 1]!;
+		expect(lastPoint.percentReturn).toBeLessThan(0);
+	});
+});
+
+describe("buildTroughPeakSeries", () => {
+	const BOTTOM_PEAK_DATA: DailyPrice[] = [
+		// Jan 2015 — bottom month. Lowest = 180 on Jan 14
+		makePrice("2015-01-01", 300),
+		makePrice("2015-01-14", 180),
+		makePrice("2015-01-31", 220),
+		// Mid-cycle rise
+		makePrice("2016-06-15", 700),
+		// Dec 2017 — peak month. Highest = 19000 on Dec 17
+		makePrice("2017-12-01", 10000),
+		makePrice("2017-12-17", 19000),
+		makePrice("2017-12-31", 14000),
+	];
+
+	it("creates a series from bottom to peak", () => {
+		const series = buildTroughPeakSeries(BOTTOM_PEAK_DATA, false);
+		expect(series.length).toBeGreaterThanOrEqual(1);
+
+		const first = series[0]!;
+		expect(first.id).toBe("trough-peak-1");
+		expect(first.label).toContain("Recovery 1");
+		expect(first.label).toContain("2015");
+		expect(first.visible).toBe(true);
+	});
+
+	it("starts at day 0 with 0% return", () => {
+		const series = buildTroughPeakSeries(BOTTOM_PEAK_DATA, false);
+		const first = series[0]!;
+		expect(first.data[0]!.day).toBe(0);
+		expect(first.data[0]!.percentReturn).toBe(0);
+	});
+
+	it("picks the lowest price day in the bottom month as baseline", () => {
+		const series = buildTroughPeakSeries(BOTTOM_PEAK_DATA, false);
+		const first = series[0]!;
+
+		// Baseline = 180 (Jan 14, lowest in Jan 2015)
+		// Price 19000 on Dec 17, 2017: (19000 - 180) / 180 * 100 ≈ 10455.6%
+		const peakPoint = first.data.find((d) => d.percentReturn > 10000);
+		expect(peakPoint).toBeDefined();
+	});
+
+	it("shows positive returns during recovery", () => {
+		const series = buildTroughPeakSeries(BOTTOM_PEAK_DATA, false);
+		const first = series[0]!;
+		const lastPoint = first.data[first.data.length - 1]!;
+		expect(lastPoint.percentReturn).toBeGreaterThan(0);
 	});
 });

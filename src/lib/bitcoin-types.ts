@@ -33,5 +33,5 @@ export interface YearGroup {
 	years: string[];
 }
 
-export type ViewMode = "year" | "epoch";
+export type ViewMode = "year" | "epoch" | "peak-trough" | "trough-peak";
 export type ScaleMode = "linear" | "log";

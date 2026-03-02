@@ -30,6 +30,8 @@ export function ChartLegend({
 	const allVisible = yearSeries.every((s) => s.visible);
 	const noneVisible = yearSeries.every((s) => !s.visible);
 	const isYearView = viewMode === "year";
+	const isCycleView =
+		viewMode === "peak-trough" || viewMode === "trough-peak";
 
 	return (
 		<div className="flex flex-col gap-2">
@@ -102,6 +104,23 @@ export function ChartLegend({
 							Avg: Visible
 						</button>
 					)}
+				</div>
+			)}
+
+			{/* Cycle view: custom average toggle only */}
+			{isCycleView && onToggleCustomAverage && (
+				<div className="flex flex-wrap items-center gap-1">
+					<button
+						type="button"
+						onClick={onToggleCustomAverage}
+						className={`rounded-md border px-2 py-0.5 text-xs transition-colors ${
+							showCustomAverage
+								? "border-foreground/30 bg-accent text-foreground"
+								: "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+						}`}
+					>
+						Avg: Visible
+					</button>
 				</div>
 			)}
 
