@@ -2,6 +2,8 @@
 
 A Bitcoin cycle visualizer that charts yearly performance and halving-aligned epochs using D3.js. Compare any combination of years, filter by 4-year cycle groups, and overlay computed averages.
 
+![Bitcoin Cycles screenshot](https://nnorx.github.io/bitcoin-cycles/screenshot.png)
+
 ## Features
 
 - **Year View** — Each year's BTC performance as % return from Jan 1, overlaid on a single chart
