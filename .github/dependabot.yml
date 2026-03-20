@@ -7,6 +7,8 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 10
+    assignees:
+      - "nnorx"
     labels:
       - "dependencies"
       - "automated"
@@ -18,15 +20,7 @@ updates:
         update-types:
           - "minor"
           - "patch"
-      # Group frontend major updates by category
-      react-major:
-        patterns:
-          - "react"
-          - "react-dom"
-          - "@types/react"
-          - "@types/react-dom"
-        update-types:
-          - "major"
+      # Group major updates by category
       vite-major:
         patterns:
           - "vite*"
@@ -39,6 +33,16 @@ updates:
           - "@radix-ui/*"
           - "tailwindcss"
           - "@tailwindcss/*"
+          - "lucide-react"
+          - "class-variance-authority"
+          - "clsx"
+          - "tailwind-merge"
+          - "tw-animate-css"
+        update-types:
+          - "major"
+      d3-major:
+        patterns:
+          - "d3-*"
         update-types:
           - "major"
       testing-major:
@@ -47,6 +51,13 @@ updates:
           - "vitest"
           - "@vitest/*"
           - "jsdom"
+        update-types:
+          - "major"
+      dev-tooling-major:
+        patterns:
+          - "@biomejs/biome"
+          - "knip"
+          - "babel-plugin-react-compiler"
         update-types:
           - "major"
     ignore:
@@ -64,6 +75,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    assignees:
+      - "nnorx"
     labels:
       - "dependencies"
       - "github-actions"
