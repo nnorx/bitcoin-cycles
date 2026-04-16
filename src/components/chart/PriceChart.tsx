@@ -97,7 +97,7 @@ export function PriceChart({ series, viewMode, scaleMode }: PriceChartProps) {
 		return (
 			<div
 				ref={containerRef}
-				className="h-[500px] w-full md:h-[600px] lg:h-[700px]"
+				className="h-[500px] w-full md:h-[600px] lg:h-[700px] xl:aspect-[3/2] xl:h-auto xl:max-h-[900px]"
 			/>
 		);
 	}
@@ -105,7 +105,7 @@ export function PriceChart({ series, viewMode, scaleMode }: PriceChartProps) {
 	return (
 		<div
 			ref={containerRef}
-			className="h-[500px] w-full md:h-[600px] lg:h-[700px]"
+			className="h-[500px] w-full md:h-[600px] lg:h-[700px] xl:aspect-[3/2] xl:h-auto xl:max-h-[900px]"
 		>
 			<svg
 				width={width}
