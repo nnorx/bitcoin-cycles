@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useBitcoinData } from "@/hooks/use-bitcoin-data";
+import { useIsDark } from "@/hooks/use-is-dark";
 import {
 	AVG_COLORS_DARK,
 	AVG_COLORS_LIGHT,
@@ -16,20 +17,6 @@ import type { ScaleMode, ViewMode } from "@/lib/bitcoin-types";
 import { ChartControls } from "./chart/ChartControls";
 import { ChartLegend } from "./chart/ChartLegend";
 import { PriceChart } from "./chart/PriceChart";
-
-function useIsDark() {
-	const [isDark, setIsDark] = useState(() =>
-		document.documentElement.classList.contains("dark"),
-	);
-
-	// Re-check on render since theme can change
-	const currentIsDark = document.documentElement.classList.contains("dark");
-	if (currentIsDark !== isDark) {
-		setIsDark(currentIsDark);
-	}
-
-	return isDark;
-}
 
 export function ChartPage() {
 	const { data, loading, error, retry } = useBitcoinData();
