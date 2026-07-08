@@ -74,11 +74,13 @@ describe("ChartLegend", () => {
 		expect(onHideAll).toHaveBeenCalledOnce();
 	});
 
-	it("reduces opacity for hidden series", () => {
+	it("marks series toggles pressed/unpressed by visibility", () => {
 		render(<ChartLegend {...defaultProps} />);
 
+		const visibleButton = screen.getByText("2020").closest("button");
 		const hiddenButton = screen.getByText("2022").closest("button");
-		expect(hiddenButton).toHaveStyle({ opacity: "0.4" });
+		expect(visibleButton).toHaveAttribute("aria-pressed", "true");
+		expect(hiddenButton).toHaveAttribute("aria-pressed", "false");
 	});
 
 	it("renders group quick-select buttons in year view", () => {

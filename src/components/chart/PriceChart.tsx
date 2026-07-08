@@ -93,67 +93,57 @@ export function PriceChart({ series, viewMode, scaleMode }: PriceChartProps) {
 		[innerWidth],
 	);
 
-	if (width === 0 || height === 0) {
-		return (
-			<div
-				ref={containerRef}
-				className="h-[500px] w-full md:h-[600px] lg:h-[700px] xl:aspect-[3/2] xl:h-auto xl:max-h-[900px]"
-			/>
-		);
-	}
-
 	return (
-		<div
-			ref={containerRef}
-			className="h-[500px] w-full md:h-[600px] lg:h-[700px] xl:aspect-[3/2] xl:h-auto xl:max-h-[900px]"
-		>
-			<svg
-				width={width}
-				height={height}
-				role="img"
-				aria-label="Bitcoin price cycle chart"
-			>
-				<g transform={`translate(${CHART_MARGIN.left},${CHART_MARGIN.top})`}>
-					<ChartAxes
-						xScale={xScale}
-						yScale={yScale}
-						width={innerWidth}
-						height={innerHeight}
-						scaleMode={scaleMode}
-						viewMode={viewMode}
-					/>
-
-					{visibleSeries.map((s) => (
-						<ChartLine
-							key={s.id}
-							series={s}
+		<div ref={containerRef} className="h-[clamp(360px,65svh,900px)] w-full">
+			{width > 0 && height > 0 && (
+				<svg
+					width={width}
+					height={height}
+					role="img"
+					aria-label="Bitcoin price cycle chart"
+				>
+					<g transform={`translate(${CHART_MARGIN.left},${CHART_MARGIN.top})`}>
+						<ChartAxes
 							xScale={xScale}
 							yScale={yScale}
+							width={innerWidth}
+							height={innerHeight}
 							scaleMode={scaleMode}
+							viewMode={viewMode}
 						/>
-					))}
 
-					<ChartCrosshair
-						mouseX={mouseX}
-						series={series}
-						xScale={xScale}
-						viewMode={viewMode}
-						height={innerHeight}
-						width={innerWidth}
-					/>
+						{visibleSeries.map((s) => (
+							<ChartLine
+								key={s.id}
+								series={s}
+								xScale={xScale}
+								yScale={yScale}
+								scaleMode={scaleMode}
+							/>
+						))}
 
-					{/* biome-ignore lint/a11y/noStaticElementInteractions: SVG overlay for chart crosshair tracking */}
-					<rect
-						width={innerWidth}
-						height={innerHeight}
-						fill="transparent"
-						onMouseMove={handleMouseMove}
-						onMouseLeave={handleMouseLeave}
-						onTouchMove={handleTouchMove}
-						onTouchEnd={handleMouseLeave}
-					/>
-				</g>
-			</svg>
+						<ChartCrosshair
+							mouseX={mouseX}
+							series={series}
+							xScale={xScale}
+							viewMode={viewMode}
+							height={innerHeight}
+							width={innerWidth}
+						/>
+
+						{/* biome-ignore lint/a11y/noStaticElementInteractions: SVG overlay for chart crosshair tracking */}
+						<rect
+							width={innerWidth}
+							height={innerHeight}
+							fill="transparent"
+							onMouseMove={handleMouseMove}
+							onMouseLeave={handleMouseLeave}
+							onTouchMove={handleTouchMove}
+							onTouchEnd={handleMouseLeave}
+						/>
+					</g>
+				</svg>
+			)}
 		</div>
 	);
 }
