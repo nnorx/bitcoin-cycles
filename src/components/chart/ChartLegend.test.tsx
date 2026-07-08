@@ -74,6 +74,19 @@ describe("ChartLegend", () => {
 		expect(onHideAll).toHaveBeenCalledOnce();
 	});
 
+	it("reports hover enter/leave on series chips", async () => {
+		const onHover = vi.fn();
+		const { user } = render(
+			<ChartLegend {...defaultProps} onHover={onHover} />,
+		);
+
+		await user.hover(screen.getByText("2021"));
+		expect(onHover).toHaveBeenLastCalledWith("2021");
+
+		await user.unhover(screen.getByText("2021"));
+		expect(onHover).toHaveBeenLastCalledWith(null);
+	});
+
 	it("marks series toggles pressed/unpressed by visibility", () => {
 		render(<ChartLegend {...defaultProps} />);
 
