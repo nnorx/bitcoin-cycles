@@ -100,6 +100,33 @@ describe("fetchBitcoinPriceHistory", () => {
 		expect(data[0]?.price).toBe(0.05);
 	});
 
+	it("aborts a hung request and falls back to static data", async () => {
+		vi.useFakeTimers();
+		try {
+			// A fetch that never resolves on its own — only settles when aborted,
+			// mirroring how the real fetch reacts to an AbortSignal.
+			vi.spyOn(globalThis, "fetch").mockImplementationOnce(
+				(_url, init) =>
+					new Promise((_resolve, reject) => {
+						(init as RequestInit | undefined)?.signal?.addEventListener(
+							"abort",
+							() => reject(new DOMException("Aborted", "AbortError")),
+						);
+					}),
+			);
+
+			const promise = fetchBitcoinPriceHistory();
+			await vi.advanceTimersByTimeAsync(10_000);
+			const data = await promise;
+
+			// Graceful fallback — no hang, returns static data
+			expect(data).toHaveLength(3);
+			expect(data[0]?.price).toBe(0.05);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it("fetches from API when cache is stale", async () => {
 		const cached = [{ date: "2021-01-01T00:00:00.000Z", price: 29000 }];
 		localStorage.setItem(CACHE_KEY, JSON.stringify(cached));

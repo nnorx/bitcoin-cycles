@@ -6,6 +6,9 @@ interface CacheMeta {
 	fetchedAt: number;
 }
 
+/** Abort the CoinGecko request if it hasn't responded in this window. */
+const REQUEST_TIMEOUT_MS = 10_000;
+
 /** Parse the bundled static dataset into DailyPrice[] */
 function getStaticData(): DailyPrice[] {
 	return (staticPriceData as RawPricePoint[]).map(([ts, price]) => ({
@@ -70,7 +73,22 @@ async function fetchRecentData(): Promise<DailyPrice[]> {
 		headers["x-cg-demo-api-key"] = apiKey;
 	}
 
-	const response = await fetch(url, { headers });
+	// Bound the request so a hung connection can't strand the UI on "Loading".
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+	let response: Response;
+	try {
+		response = await fetch(url, { headers, signal: controller.signal });
+	} catch (err) {
+		if (err instanceof DOMException && err.name === "AbortError") {
+			throw new Error("CoinGecko request timed out. Please try again.");
+		}
+		throw err;
+	} finally {
+		clearTimeout(timeout);
+	}
+
 	if (!response.ok) {
 		if (response.status === 429) {
 			throw new Error(
