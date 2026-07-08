@@ -27,6 +27,7 @@ A Bitcoin cycle visualizer that charts yearly performance, halving-aligned epoch
 - **Year Group Filters** — Quick-select Election, Post-Election, Midterm, or Pre-Election years
 - **Average Lines** — Toggle dashed average lines for any group, or average the currently visible series
 - **Crosshair Tooltip** — Hover to see % return for all visible series at any day
+- **Shareable Links** — The URL reflects the current view, scale, selected series, and averages, so any view can be linked or reloaded. Hit **Share** to copy it.
 - **Dark / Light Theme** — Adapts chart colors automatically
 
 ## Getting Started

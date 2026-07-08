@@ -1,4 +1,5 @@
 import { ChartPage } from "./components/ChartPage";
+import { ShareButton } from "./components/ShareButton";
 import { ThemeToggle } from "./components/ThemeToggle";
 
 function App() {
@@ -6,7 +7,10 @@ function App() {
 		<div className="flex min-h-screen flex-col bg-background text-foreground">
 			<header className="flex items-center justify-between border-border border-b px-6 py-4">
 				<h1 className="font-semibold text-lg">Bitcoin Cycles</h1>
-				<ThemeToggle />
+				<div className="flex items-center gap-2">
+					<ShareButton />
+					<ThemeToggle />
+				</div>
 			</header>
 			<main className="flex-1 p-4 md:p-6">
 				<ChartPage />
