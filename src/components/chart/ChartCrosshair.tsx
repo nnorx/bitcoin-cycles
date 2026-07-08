@@ -1,8 +1,8 @@
-import { bisector } from "d3-array";
 import { format as d3Format } from "d3-format";
 import type { ScaleLinear } from "d3-scale";
 import { useMemo } from "react";
-import type { ChartSeries, SeriesPoint, ViewMode } from "@/lib/bitcoin-types";
+import type { ChartSeries, ViewMode } from "@/lib/bitcoin-types";
+import { nearestPoint } from "@/lib/nearest-point";
 
 interface ChartCrosshairProps {
 	mouseX: number | null;
@@ -11,9 +11,10 @@ interface ChartCrosshairProps {
 	viewMode: ViewMode;
 	height: number;
 	width: number;
+	/** Series id currently hovered — its row is emphasized in the tooltip */
+	hoveredId?: string | null;
 }
 
-const pointBisector = bisector<SeriesPoint, number>((d) => d.day).left;
 const formatPct = d3Format("+,.1f");
 const formatPriceLarge = d3Format("$,.0f");
 const formatPriceSmall = d3Format("$,.4f");
@@ -46,6 +47,7 @@ function dayOfYearLabel(day: number): string {
 }
 
 interface TooltipItem {
+	id: string;
 	label: string;
 	color: string;
 	percent: number;
@@ -59,6 +61,7 @@ export function ChartCrosshair({
 	viewMode,
 	height,
 	width,
+	hoveredId = null,
 }: ChartCrosshairProps) {
 	const tooltipData = useMemo(() => {
 		if (mouseX == null) return null;
@@ -69,19 +72,10 @@ export function ChartCrosshair({
 		for (const s of series) {
 			if (!s.visible || s.data.length === 0) continue;
 
-			const idx = pointBisector(s.data, day);
-			const d0 = s.data[idx - 1];
-			const d1 = s.data[idx];
-
-			let nearest: SeriesPoint | undefined;
-			if (d0 && d1) {
-				nearest = day - d0.day < d1.day - day ? d0 : d1;
-			} else {
-				nearest = d0 ?? d1;
-			}
-
+			const nearest = nearestPoint(s.data, day);
 			if (nearest) {
 				items.push({
+					id: s.id,
 					label: s.label,
 					color: s.color,
 					percent: nearest.percentReturn,
@@ -148,8 +142,13 @@ export function ChartCrosshair({
 					<div style={{ fontWeight: 600, marginBottom: 2 }}>{headerLabel}</div>
 					{tooltipData.items.map((item) => (
 						<div
-							key={item.label}
-							style={{ display: "flex", alignItems: "center", gap: 6 }}
+							key={item.id}
+							style={{
+								display: "flex",
+								alignItems: "center",
+								gap: 6,
+								fontWeight: item.id === hoveredId ? 600 : 400,
+							}}
 						>
 							<span
 								style={{

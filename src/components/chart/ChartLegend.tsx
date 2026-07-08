@@ -14,6 +14,10 @@ interface ChartLegendProps {
 	enabledAverages?: Set<string>;
 	showCustomAverage?: boolean;
 	onToggleCustomAverage?: () => void;
+	/** Series id currently hovered (chip or chart line) — its chip is emphasized */
+	hoveredId?: string | null;
+	/** Report the series id under the pointer/focus, or null when it leaves */
+	onHover?: (id: string | null) => void;
 }
 
 /** Shared pill styling for average toggles — visibly bistable via aria-pressed */
@@ -34,6 +38,8 @@ export function ChartLegend({
 	enabledAverages,
 	showCustomAverage,
 	onToggleCustomAverage,
+	hoveredId = null,
+	onHover,
 }: ChartLegendProps) {
 	const yearSeries = series.filter((s) => !s.dashed);
 	const allVisible = yearSeries.every((s) => s.visible);
@@ -121,11 +127,16 @@ export function ChartLegend({
 						type="button"
 						aria-pressed={s.visible}
 						onClick={() => onToggle(s.id)}
+						onMouseEnter={() => onHover?.(s.id)}
+						onMouseLeave={() => onHover?.(null)}
+						onFocus={() => onHover?.(s.id)}
+						onBlur={() => onHover?.(null)}
 						className={cn(
 							"flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-all active:scale-[0.97]",
 							s.visible
 								? "border-border bg-accent/50 text-foreground hover:bg-accent"
 								: "border-border/60 text-muted-foreground hover:bg-accent/40 hover:text-foreground",
+							hoveredId === s.id && "ring-2 ring-ring/60",
 						)}
 					>
 						{s.dashed ? (

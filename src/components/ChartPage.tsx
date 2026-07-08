@@ -33,6 +33,7 @@ export function ChartPage() {
 	const [showCustomAverage, setShowCustomAverage] = useState(
 		initialState.showCustomAverage,
 	);
+	const [hoveredId, setHoveredId] = useState<string | null>(null);
 	const isDark = useIsDark();
 
 	// Keep the URL in sync so the current view is shareable and survives reloads.
@@ -138,6 +139,7 @@ export function ChartPage() {
 		setVisibleIds(null);
 		setEnabledAverages(new Set());
 		setShowCustomAverage(false);
+		setHoveredId(null);
 	}, []);
 
 	const handleToggleAverage = useCallback((avgId: string) => {
@@ -228,10 +230,14 @@ export function ChartPage() {
 				series={combinedSeries}
 				viewMode={viewMode}
 				scaleMode={scaleMode}
+				hoveredId={hoveredId}
+				onHover={setHoveredId}
 			/>
 			<ChartLegend
 				series={combinedSeries}
 				viewMode={viewMode}
+				hoveredId={hoveredId}
+				onHover={setHoveredId}
 				onToggle={handleToggle}
 				onShowAll={handleShowAll}
 				onHideAll={handleHideAll}

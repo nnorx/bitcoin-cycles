@@ -4,17 +4,31 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useContainerSize } from "@/hooks/use-container-size";
 import { CHART_MARGIN } from "@/lib/bitcoin-constants";
 import type { ChartSeries, ScaleMode, ViewMode } from "@/lib/bitcoin-types";
+import { nearestPoint } from "@/lib/nearest-point";
 import { ChartAxes } from "./ChartAxes";
 import { ChartCrosshair } from "./ChartCrosshair";
 import { ChartLine } from "./ChartLine";
+
+/** Max vertical distance (px) from a line for it to count as hovered */
+const HOVER_RADIUS = 20;
 
 interface PriceChartProps {
 	series: ChartSeries[];
 	viewMode: ViewMode;
 	scaleMode: ScaleMode;
+	/** Series id currently hovered (via chart line or legend chip) */
+	hoveredId?: string | null;
+	/** Report the series id under the cursor, or null when none is close */
+	onHover?: (id: string | null) => void;
 }
 
-export function PriceChart({ series, viewMode, scaleMode }: PriceChartProps) {
+export function PriceChart({
+	series,
+	viewMode,
+	scaleMode,
+	hoveredId = null,
+	onHover,
+}: PriceChartProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const { width, height } = useContainerSize(containerRef);
 	const [mouseX, setMouseX] = useState<number | null>(null);
@@ -26,6 +40,14 @@ export function PriceChart({ series, viewMode, scaleMode }: PriceChartProps) {
 		() => series.filter((s) => s.visible),
 		[series],
 	);
+
+	// Paint the hovered line last so it draws above the dimmed ones.
+	const paintOrderedSeries = useMemo(() => {
+		if (!hoveredId) return visibleSeries;
+		const hovered = visibleSeries.filter((s) => s.id === hoveredId);
+		if (hovered.length === 0) return visibleSeries;
+		return [...visibleSeries.filter((s) => s.id !== hoveredId), ...hovered];
+	}, [visibleSeries, hoveredId]);
 
 	const xScale = useMemo(() => {
 		let maxDay: number;
@@ -71,16 +93,56 @@ export function PriceChart({ series, viewMode, scaleMode }: PriceChartProps) {
 			.nice();
 	}, [visibleSeries, scaleMode, innerHeight]);
 
+	/**
+	 * Find the visible series whose line passes closest to the cursor.
+	 * Math-based hit detection (instead of pointer events on the paths)
+	 * because the transparent crosshair overlay sits above the lines,
+	 * and it works for touch tracking too.
+	 */
+	const detectHoveredSeries = useCallback(
+		(x: number, y: number) => {
+			if (!onHover) return;
+
+			const day = xScale.invert(x);
+			let bestId: string | null = null;
+			let bestDist = Number.POSITIVE_INFINITY;
+
+			for (const s of visibleSeries) {
+				const point = nearestPoint(s.data, day);
+				if (!point) continue;
+
+				const val =
+					scaleMode === "log"
+						? 1 + point.percentReturn / 100
+						: point.percentReturn;
+				if (scaleMode === "log" && val <= 0) continue;
+
+				const dist = Math.abs(yScale(val) - y);
+				if (dist < bestDist) {
+					bestDist = dist;
+					bestId = s.id;
+				}
+			}
+
+			onHover(bestDist <= HOVER_RADIUS ? bestId : null);
+		},
+		[onHover, xScale, yScale, scaleMode, visibleSeries],
+	);
+
 	const handleMouseMove = useCallback(
 		(e: React.MouseEvent<SVGRectElement>) => {
 			const rect = e.currentTarget.getBoundingClientRect();
 			const x = e.clientX - rect.left;
 			setMouseX(Math.max(0, Math.min(x, innerWidth)));
+			detectHoveredSeries(x, e.clientY - rect.top);
 		},
-		[innerWidth],
+		[innerWidth, detectHoveredSeries],
 	);
 
-	const handleMouseLeave = useCallback(() => setMouseX(null), []);
+	const handleMouseLeave = useCallback(() => {
+		setMouseX(null);
+		onHover?.(null);
+	}, [onHover]);
 
 	const handleTouchMove = useCallback(
 		(e: React.TouchEvent<SVGRectElement>) => {
@@ -89,8 +151,9 @@ export function PriceChart({ series, viewMode, scaleMode }: PriceChartProps) {
 			const rect = e.currentTarget.getBoundingClientRect();
 			const x = touch.clientX - rect.left;
 			setMouseX(Math.max(0, Math.min(x, innerWidth)));
+			detectHoveredSeries(x, touch.clientY - rect.top);
 		},
-		[innerWidth],
+		[innerWidth, detectHoveredSeries],
 	);
 
 	return (
@@ -112,13 +175,15 @@ export function PriceChart({ series, viewMode, scaleMode }: PriceChartProps) {
 							viewMode={viewMode}
 						/>
 
-						{visibleSeries.map((s) => (
+						{paintOrderedSeries.map((s) => (
 							<ChartLine
 								key={s.id}
 								series={s}
 								xScale={xScale}
 								yScale={yScale}
 								scaleMode={scaleMode}
+								dimmed={hoveredId !== null && s.id !== hoveredId}
+								highlighted={s.id === hoveredId}
 							/>
 						))}
 
@@ -129,6 +194,7 @@ export function PriceChart({ series, viewMode, scaleMode }: PriceChartProps) {
 							viewMode={viewMode}
 							height={innerHeight}
 							width={innerWidth}
+							hoveredId={hoveredId}
 						/>
 
 						{/* biome-ignore lint/a11y/noStaticElementInteractions: SVG overlay for chart crosshair tracking */}
