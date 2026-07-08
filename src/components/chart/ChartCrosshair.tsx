@@ -15,6 +15,42 @@ interface ChartCrosshairProps {
 
 const pointBisector = bisector<SeriesPoint, number>((d) => d.day).left;
 const formatPct = d3Format("+,.1f");
+const formatPriceLarge = d3Format("$,.0f");
+const formatPriceSmall = d3Format("$,.4f");
+
+/** Sub-$1 early history needs decimals; everything else reads fine as whole dollars. */
+function formatPrice(price: number): string {
+	return price >= 1 ? formatPriceLarge(price) : formatPriceSmall(price);
+}
+
+const MONTHS = [
+	"Jan",
+	"Feb",
+	"Mar",
+	"Apr",
+	"May",
+	"Jun",
+	"Jul",
+	"Aug",
+	"Sep",
+	"Oct",
+	"Nov",
+	"Dec",
+];
+
+/** Map a day-of-year (1–366) to a calendar label like "Mar 14" (non-leap reference). */
+function dayOfYearLabel(day: number): string {
+	const clamped = Math.max(1, Math.min(365, Math.round(day)));
+	const d = new Date(Date.UTC(2001, 0, clamped));
+	return `${MONTHS[d.getUTCMonth()] ?? ""} ${d.getUTCDate()}`;
+}
+
+interface TooltipItem {
+	label: string;
+	color: string;
+	percent: number;
+	price: number | undefined;
+}
 
 export function ChartCrosshair({
 	mouseX,
@@ -28,7 +64,7 @@ export function ChartCrosshair({
 		if (mouseX == null) return null;
 
 		const day = xScale.invert(mouseX);
-		const items: Array<{ label: string; color: string; value: string }> = [];
+		const items: TooltipItem[] = [];
 
 		for (const s of series) {
 			if (!s.visible || s.data.length === 0) continue;
@@ -48,10 +84,14 @@ export function ChartCrosshair({
 				items.push({
 					label: s.label,
 					color: s.color,
-					value: `${formatPct(nearest.percentReturn)}%`,
+					percent: nearest.percentReturn,
+					price: nearest.price,
 				});
 			}
 		}
+
+		// Live leaderboard: highest % return first.
+		items.sort((a, b) => b.percent - a.percent);
 
 		return { day: Math.round(day), items };
 	}, [mouseX, series, xScale]);
@@ -59,7 +99,12 @@ export function ChartCrosshair({
 	if (mouseX == null || !tooltipData || tooltipData.items.length === 0)
 		return null;
 
-	const tooltipMaxWidth = viewMode === "year" ? 140 : 220;
+	const headerLabel =
+		viewMode === "year"
+			? dayOfYearLabel(tooltipData.day)
+			: `Day ${tooltipData.day}`;
+
+	const tooltipMaxWidth = viewMode === "year" ? 210 : 260;
 	const flipThreshold = width - tooltipMaxWidth - 20;
 	const tooltipX =
 		mouseX > flipThreshold ? mouseX - tooltipMaxWidth - 12 : mouseX + 12;
@@ -100,13 +145,11 @@ export function ChartCrosshair({
 						lineHeight: "1.5",
 					}}
 				>
-					<div style={{ fontWeight: 600, marginBottom: 2 }}>
-						Day {tooltipData.day}
-					</div>
+					<div style={{ fontWeight: 600, marginBottom: 2 }}>{headerLabel}</div>
 					{tooltipData.items.map((item) => (
 						<div
 							key={item.label}
-							style={{ display: "flex", alignItems: "center", gap: 4 }}
+							style={{ display: "flex", alignItems: "center", gap: 6 }}
 						>
 							<span
 								style={{
@@ -133,8 +176,19 @@ export function ChartCrosshair({
 									fontVariantNumeric: "tabular-nums",
 								}}
 							>
-								{item.value}
+								{formatPct(item.percent)}%
 							</span>
+							{item.price !== undefined && (
+								<span
+									style={{
+										flexShrink: 0,
+										color: "var(--muted-foreground)",
+										fontVariantNumeric: "tabular-nums",
+									}}
+								>
+									{formatPrice(item.price)}
+								</span>
+							)}
 						</div>
 					))}
 				</div>

@@ -13,6 +13,8 @@ export interface SeriesPoint {
 	day: number;
 	/** Y-axis value: % change from baseline (Jan 1 or halving day) */
 	percentReturn: number;
+	/** Actual BTC price (USD) at this point; absent for computed averages */
+	price?: number;
 }
 
 /** A complete series ready for D3 rendering */
