@@ -50,6 +50,7 @@ export function buildYearSeries(
 		const points: SeriesPoint[] = prices.map((d) => ({
 			day: dayOfYear(d.date),
 			percentReturn: ((d.price - baseline) / baseline) * 100,
+			price: d.price,
 		}));
 
 		return [
@@ -102,6 +103,7 @@ export function buildEpochSeries(
 		const points: SeriesPoint[] = epochData.map((d) => ({
 			day: daysBetween(start, d.date),
 			percentReturn: ((d.price - baseline) / baseline) * 100,
+			price: d.price,
 		}));
 
 		epochs.push({
@@ -171,6 +173,7 @@ export function buildPeakTroughSeries(
 				data: epochData.map((d) => ({
 					day: daysBetween(peak.date, d.date),
 					percentReturn: ((d.price - baseline) / baseline) * 100,
+					price: d.price,
 				})),
 				visible: true,
 			},
@@ -211,6 +214,7 @@ export function buildTroughPeakSeries(
 				data: epochData.map((d) => ({
 					day: daysBetween(bottom.date, d.date),
 					percentReturn: ((d.price - baseline) / baseline) * 100,
+					price: d.price,
 				})),
 				visible: true,
 			},
