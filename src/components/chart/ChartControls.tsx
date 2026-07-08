@@ -22,8 +22,9 @@ function ToggleGroup<T extends string>({
 				<button
 					key={opt.value}
 					type="button"
+					aria-pressed={value === opt.value}
 					onClick={() => onChange(opt.value)}
-					className={`px-3 py-1.5 font-medium text-xs transition-colors ${
+					className={`px-3 py-1.5 font-medium text-xs transition-all active:scale-[0.97] ${
 						value === opt.value
 							? "bg-primary text-primary-foreground"
 							: "text-muted-foreground hover:bg-accent hover:text-foreground"

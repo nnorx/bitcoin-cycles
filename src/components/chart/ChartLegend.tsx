@@ -1,5 +1,7 @@
+import { Button } from "@/components/ui/button";
 import { YEAR_GROUPS } from "@/lib/bitcoin-constants";
 import type { ChartSeries, ViewMode } from "@/lib/bitcoin-types";
+import { cn } from "@/lib/utils";
 
 interface ChartLegendProps {
 	series: ChartSeries[];
@@ -13,6 +15,13 @@ interface ChartLegendProps {
 	showCustomAverage?: boolean;
 	onToggleCustomAverage?: () => void;
 }
+
+/** Shared pill styling for average toggles — visibly bistable via aria-pressed */
+const AVG_TOGGLE_CLASS = cn(
+	"rounded-md border px-2 py-0.5 text-xs transition-all active:scale-[0.97]",
+	"aria-pressed:border-foreground/30 aria-pressed:bg-accent aria-pressed:text-foreground",
+	"border-border text-muted-foreground hover:bg-accent hover:text-foreground",
+);
 
 export function ChartLegend({
 	series,
@@ -36,90 +45,71 @@ export function ChartLegend({
 		<div className="flex flex-col gap-2">
 			{/* Row 1: Visibility controls + group quick-select */}
 			<div className="flex flex-wrap items-center gap-2">
-				<button
-					type="button"
+				<Button
+					variant="ghost"
+					size="sm"
 					onClick={onShowAll}
 					disabled={allVisible}
-					className="rounded px-2 py-0.5 text-muted-foreground text-xs hover:text-foreground disabled:opacity-40"
+					className="h-7 px-2 text-xs"
 				>
 					All
-				</button>
-				<button
-					type="button"
+				</Button>
+				<Button
+					variant="ghost"
+					size="sm"
 					onClick={onHideAll}
 					disabled={noneVisible}
-					className="rounded px-2 py-0.5 text-muted-foreground text-xs hover:text-foreground disabled:opacity-40"
+					className="h-7 px-2 text-xs"
 				>
 					None
-				</button>
+				</Button>
 				{isYearView && onGroupSelect && (
 					<>
 						<span className="text-border">|</span>
 						{YEAR_GROUPS.map((group) => (
-							<button
+							<Button
 								key={group.id}
-								type="button"
+								variant="outline"
+								size="sm"
 								onClick={() => onGroupSelect(group.id)}
-								className="rounded border border-border px-2 py-0.5 text-muted-foreground text-xs hover:bg-accent hover:text-foreground"
+								className="h-7 px-2 text-xs active:scale-[0.97]"
 							>
 								{group.label}
-							</button>
+							</Button>
 						))}
 					</>
 				)}
 			</div>
 
-			{/* Row 2: Average toggles (year view only) */}
-			{isYearView && onToggleAverage && (
+			{/* Row 2: Average toggles */}
+			{(isYearView || isCycleView) && (
 				<div className="flex flex-wrap items-center gap-1">
-					{YEAR_GROUPS.map((group) => {
-						const avgId = `avg-${group.id}`;
-						const isActive = enabledAverages?.has(avgId) ?? false;
-						return (
-							<button
-								key={avgId}
-								type="button"
-								onClick={() => onToggleAverage(avgId)}
-								className={`rounded-md border px-2 py-0.5 text-xs transition-colors ${
-									isActive
-										? "border-foreground/30 bg-accent text-foreground"
-										: "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
-								}`}
-							>
-								Avg: {group.label}
-							</button>
-						);
-					})}
+					{isYearView &&
+						onToggleAverage &&
+						YEAR_GROUPS.map((group) => {
+							const avgId = `avg-${group.id}`;
+							return (
+								<button
+									key={avgId}
+									type="button"
+									aria-pressed={enabledAverages?.has(avgId) ?? false}
+									onClick={() => onToggleAverage(avgId)}
+									className={AVG_TOGGLE_CLASS}
+								>
+									Avg: {group.label}
+								</button>
+							);
+						})}
 					{onToggleCustomAverage && (
 						<button
 							type="button"
+							aria-pressed={showCustomAverage ?? false}
 							onClick={onToggleCustomAverage}
-							className={`rounded-md border px-2 py-0.5 text-xs transition-colors ${
-								showCustomAverage
-									? "border-foreground/30 bg-accent text-foreground"
-									: "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
-							}`}
+							className={AVG_TOGGLE_CLASS}
 						>
 							Avg: Visible
 						</button>
 					)}
-				</div>
-			)}
-
-			{/* Cycle view: custom average toggle only */}
-			{isCycleView && onToggleCustomAverage && (
-				<div className="flex flex-wrap items-center gap-1">
-					<button
-						type="button"
-						onClick={onToggleCustomAverage}
-						className={`rounded-md border px-2 py-0.5 text-xs transition-colors ${
-							showCustomAverage
-								? "border-foreground/30 bg-accent text-foreground"
-								: "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
-						}`}
-					>
-						Avg: Visible
-					</button>
 				</div>
 			)}
 
@@ -129,19 +119,30 @@ export function ChartLegend({
 					<button
 						key={s.id}
 						type="button"
+						aria-pressed={s.visible}
 						onClick={() => onToggle(s.id)}
-						className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs transition-opacity hover:bg-accent"
-						style={{ opacity: s.visible ? 1 : 0.4 }}
+						className={cn(
+							"flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-all active:scale-[0.97]",
+							s.visible
+								? "border-border bg-accent/50 text-foreground hover:bg-accent"
+								: "border-border/60 text-muted-foreground hover:bg-accent/40 hover:text-foreground",
+						)}
 					>
 						{s.dashed ? (
 							<span
 								className="inline-block h-0 w-3 border-t-2 border-dashed"
-								style={{ borderColor: s.color }}
+								style={{
+									borderColor: s.visible ? s.color : "var(--muted-foreground)",
+								}}
 							/>
 						) : (
 							<span
-								className="inline-block h-2.5 w-2.5 rounded-full"
-								style={{ backgroundColor: s.color }}
+								className="inline-block h-2.5 w-2.5 rounded-full transition-colors"
+								style={{
+									backgroundColor: s.visible
+										? s.color
+										: "var(--muted-foreground)",
+								}}
 							/>
 						)}
 						{s.label}
