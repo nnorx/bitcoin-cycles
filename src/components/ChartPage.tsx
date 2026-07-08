@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useBitcoinData } from "@/hooks/use-bitcoin-data";
 import { useIsDark } from "@/hooks/use-is-dark";
 import {
@@ -14,22 +14,39 @@ import {
 	buildYearSeries,
 } from "@/lib/bitcoin-transforms";
 import type { ScaleMode, ViewMode } from "@/lib/bitcoin-types";
+import { parseUrlState, serializeUrlState } from "@/lib/url-state";
 import { ChartControls } from "./chart/ChartControls";
 import { ChartLegend } from "./chart/ChartLegend";
 import { PriceChart } from "./chart/PriceChart";
 
 export function ChartPage() {
 	const { data, loading, error, retry } = useBitcoinData();
-	const [viewMode, setViewMode] = useState<ViewMode>("year");
-	const [scaleMode, setScaleMode] = useState<ScaleMode>("log");
-	const [visibilityMap, setVisibilityMap] = useState<Map<string, boolean>>(
-		() => new Map(),
+	const initialState = useMemo(() => parseUrlState(window.location.search), []);
+	const [viewMode, setViewMode] = useState<ViewMode>(initialState.viewMode);
+	const [scaleMode, setScaleMode] = useState<ScaleMode>(initialState.scaleMode);
+	const [visibleIds, setVisibleIds] = useState<Set<string> | null>(
+		initialState.visibleIds,
 	);
 	const [enabledAverages, setEnabledAverages] = useState<Set<string>>(
-		() => new Set(),
+		initialState.enabledAverages,
 	);
-	const [showCustomAverage, setShowCustomAverage] = useState(false);
+	const [showCustomAverage, setShowCustomAverage] = useState(
+		initialState.showCustomAverage,
+	);
 	const isDark = useIsDark();
+
+	// Keep the URL in sync so the current view is shareable and survives reloads.
+	useEffect(() => {
+		const search = serializeUrlState({
+			viewMode,
+			scaleMode,
+			visibleIds,
+			enabledAverages,
+			showCustomAverage,
+		});
+		const url = `${window.location.pathname}${search}${window.location.hash}`;
+		window.history.replaceState(null, "", url);
+	}, [viewMode, scaleMode, visibleIds, enabledAverages, showCustomAverage]);
 
 	const allSeries = useMemo(() => {
 		if (!data) return [];
@@ -49,9 +66,9 @@ export function ChartPage() {
 		() =>
 			allSeries.map((s) => ({
 				...s,
-				visible: visibilityMap.get(s.id) ?? s.visible,
+				visible: visibleIds ? visibleIds.has(s.id) : true,
 			})),
-		[allSeries, visibilityMap],
+		[allSeries, visibleIds],
 	);
 
 	const isCycleView = viewMode === "peak-trough" || viewMode === "trough-peak";
@@ -118,7 +135,7 @@ export function ChartPage() {
 
 	const handleViewModeChange = useCallback((mode: ViewMode) => {
 		setViewMode(mode);
-		setVisibilityMap(new Map());
+		setVisibleIds(null);
 		setEnabledAverages(new Set());
 		setShowCustomAverage(false);
 	}, []);
@@ -145,50 +162,36 @@ export function ChartPage() {
 				handleToggleAverage(id);
 				return;
 			}
-			setVisibilityMap((prev) => {
-				const next = new Map(prev);
-				const currentlyVisible = next.get(id) ?? true;
-				next.set(id, !currentlyVisible);
-				return next;
+			setVisibleIds((prev) => {
+				const allIds = allSeries.map((s) => s.id);
+				const next = new Set(prev ?? allIds);
+				if (next.has(id)) {
+					next.delete(id);
+				} else {
+					next.add(id);
+				}
+				// Collapse back to the "all visible" default for a clean URL.
+				return next.size === allIds.length && allIds.every((x) => next.has(x))
+					? null
+					: next;
 			});
 		},
-		[handleToggleAverage],
+		[allSeries, handleToggleAverage],
 	);
 
 	const handleShowAll = useCallback(() => {
-		setVisibilityMap((prev) => {
-			const next = new Map(prev);
-			for (const s of allSeries) {
-				next.set(s.id, true);
-			}
-			return next;
-		});
-	}, [allSeries]);
+		setVisibleIds(null);
+	}, []);
 
 	const handleHideAll = useCallback(() => {
-		setVisibilityMap((prev) => {
-			const next = new Map(prev);
-			for (const s of allSeries) {
-				next.set(s.id, false);
-			}
-			return next;
-		});
-	}, [allSeries]);
+		setVisibleIds(new Set());
+	}, []);
 
-	const handleGroupSelect = useCallback(
-		(groupId: string) => {
-			const group = YEAR_GROUPS.find((g) => g.id === groupId);
-			if (!group) return;
-			setVisibilityMap(() => {
-				const next = new Map<string, boolean>();
-				for (const s of allSeries) {
-					next.set(s.id, group.years.includes(s.id));
-				}
-				return next;
-			});
-		},
-		[allSeries],
-	);
+	const handleGroupSelect = useCallback((groupId: string) => {
+		const group = YEAR_GROUPS.find((g) => g.id === groupId);
+		if (!group) return;
+		setVisibleIds(new Set(group.years));
+	}, []);
 
 	if (loading) {
 		return (
